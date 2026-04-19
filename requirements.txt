@@ -2,3 +2,6 @@ aiogram==3.22.0
 APScheduler==3.11.0
 aiosqlite==0.21.0
 Pillow==11.3.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0+cpu
+torchvision==0.23.0+cpu
