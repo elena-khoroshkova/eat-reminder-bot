@@ -49,6 +49,37 @@ export FOOD_CONFIDENCE="0.30"
 python -m app
 ```
 
+## Deploy to Railway
+
+This bot runs as a **worker** (polling Telegram), not a web server.
+
+1) Push this repo to GitHub and create a new Railway project from the repo.
+
+2) In Railway → your service → **Variables**, set:
+
+- `BOT_TOKEN` (required)
+- Optional:
+  - `MEAL_TIMES` (default `09:00,14:00,20:00`)
+  - `REMIND_EVERY_MINUTES` (default `10`)
+  - `TZ` (default `local`)
+  - `FOOD_CONFIDENCE` (default `0.25`)
+  - `DB_PATH` (default `data.sqlite3`)
+
+3) Deploy. The start command is:
+
+```bash
+python -m app
+```
+
+### Persistence note (SQLite)
+
+By default, Railway’s filesystem may not persist across redeploys/restarts.
+If you want your SQLite state to survive reliably, attach a **Railway Volume** and set:
+
+```bash
+export DB_PATH="/data/data.sqlite3"
+```
+
 ## Commands
 
 - `/start` — enable reminders for you
