@@ -42,6 +42,26 @@ async def main_async() -> None:
     scheduler = ReminderScheduler(cfg.tz)
     classifier = FoodClassifier()
 
+    async def restore_schedules() -> None:
+        """
+        On Railway (and other hosts), the process may restart/redeploy.
+        Daily meal jobs are in-memory, so we re-create them from SQLite on startup.
+        """
+        users = await storage.list_enabled_users()
+        for st in users:
+            scheduler.upsert_daily_meals(
+                user_id=st.user_id,
+                times=(st.meal_time_1, st.meal_time_2, st.meal_time_3),
+                on_meal=send_reminder,
+            )
+            if st.waiting_for_meal is not None:
+                scheduler.start_nagging(
+                    user_id=st.user_id,
+                    meal_slot=st.waiting_for_meal,
+                    every_minutes=cfg.remind_every_minutes,
+                    on_nag=send_nag,
+                )
+
     async def send_reminder(user_id: int, meal_slot: int) -> None:
         try:
             st = await storage.get_user(user_id)
@@ -212,6 +232,7 @@ async def main_async() -> None:
         await message.answer("Send a photo of your food when I remind you to eat.")
 
     scheduler.start()
+    await restore_schedules()
 
     logger.info("Bot started.")
     await dp.start_polling(bot)

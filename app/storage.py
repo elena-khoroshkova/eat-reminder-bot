@@ -107,3 +107,31 @@ class Storage:
             )
             await db.commit()
 
+    async def list_enabled_users(self) -> list[UserState]:
+        async with aiosqlite.connect(self._db_path) as db:
+            cur = await db.execute(
+                """
+                SELECT user_id, enabled, meal_time_1, meal_time_2, meal_time_3, waiting_for_meal, waiting_since_utc
+                FROM user_state
+                WHERE enabled = 1
+                """
+            )
+            rows = await cur.fetchall()
+            await cur.close()
+
+        users: list[UserState] = []
+        for row in rows:
+            waiting_for_meal = row[5]
+            users.append(
+                UserState(
+                    user_id=row[0],
+                    enabled=bool(row[1]),
+                    meal_time_1=row[2],
+                    meal_time_2=row[3],
+                    meal_time_3=row[4],
+                    waiting_for_meal=int(waiting_for_meal) if waiting_for_meal is not None else None,  # type: ignore[arg-type]
+                    waiting_since_utc=row[6],
+                )
+            )
+        return users
+
